@@ -2,7 +2,7 @@
 	<view class="content">
 		<uni-drawer ref="uniDrawer" mode="left">
 			<scroll-view style="height: 100%;" scroll-y="true">
-				<uni-section v-for="(item,index) in imgDictList" :title="item.title" type="line">
+				<uni-section v-for="(item,index) in imgDictList" :key="index" :title="item.title" type="line">
 					<view class="drawer-btn">
 						<button class="detail-btn" type="primary" size="mini" @click="imgDictList[index].msgShow = !imgDictList[index].msgShow">
 							{{item.msgShow ? '收起' : '打开'}}详情
@@ -23,14 +23,15 @@
 				<button class="btn" type="default" @click="$refs.uniDrawer.open()">切换</button>
 				<button class="btn" type="primary" @click="init">刷新</button>
 			</view>
-			<uni-pagination v-model="pageIndex" :total="folderImgList.hanKouJiangTan.length" :pageSize="pageSize" title="标题文字" @change="pageIndexChange" />
+			<uni-pagination v-model="pageIndex" :total="folderImgList[currentImageItem].length" :pageSize="pageSize" title="标题文字" @change="pageIndexChange" />
 		</view>
 	</view>
 </template>
 
 <script>
-	import imgList from "../../utils/images.json";
-	import imgDict from "../../utils/imagesDict.json";
+	// import imgList from "https://zsdl-zzj.com:83/images/data/images.json";
+	// import imgDict from "https://zsdl-zzj.com:83/images/data/imagesDict.json";
+	// import imgDetail from "https://zsdl-zzj.com:83/images/data/imagesDetail.json";
 	import ZWaterfallFlow from "../../components/z-waterfall-flow/index";
 	export default {
 		name: "waterfall-flow",
@@ -40,38 +41,78 @@
 		data() {
 			return {
 				httpPath: "https://zsdl-zzj.com:83/images/",
-				folderImgList: imgList,
-				currentImageItem: Object.keys(imgDict)[0],
+				folderImgList: [],
+				currentImageItem: "",
+				imgDict: {},
 				imgDictList: [],
 				imageInfo: [],
-				scenicSpot: {
-					hanKouJiangTan: {
-						message: '汉口江滩，位于湖北省武汉市江岸区，面积160万平方米，与沿江大道相邻，与武昌黄鹤楼景区相望，与长江百舸争流相映，构成武汉市中心区独具魅力的景观中心，是武汉市著名的风景游览胜地。'
-					},
-					huangHeLou: {
-						message: '黄鹤楼，位于湖北省武汉市武昌区，地处蛇山之巅，濒临万里长江，为武汉市地标建筑；始建于三国吴黄武二年（223年），历代屡加重修，现存建筑以清代“同治楼”为原型设计，重建于1985年；因唐代诗人崔颢登楼所题《黄鹤楼》一诗而名扬四海。自古有“天下绝景”之美誉，与晴川阁、古琴台并称为“武汉三大名胜”，与湖南岳阳岳阳楼、江西南昌滕王阁并称为“江南三大名楼”，是“武汉十大景”之首、“中国古代四大名楼”之一、“中国十大历史文化名楼”之一，世称"天下江山第一楼"。'
-					},
-					huBeiShengBoWuGuan: {
-						message: '湖北省博物馆筹建于1953年，坐落于湖北省武汉市武昌区东湖风景区，占地面积81909平方米，建筑面积49611平方米，展厅面积13427平方米，有中国规模最大的古乐器陈列馆。'
-					},
-				},
+				scenicSpot: {},
 				loadData: [],
 				pageIndex: 1,
 				pageSize: 10,
 				timer: {}
 			}
 		},
+		onShareAppMessage() {
+			console.log('onShareAppMessage')
+			return {
+				title: '个人图片集',
+				path: 'pages/index/index'
+			}
+		},
 		async onLoad() {
-			console.log(imgList)
+			this.folderImgList = await this.getImageList()
+			this.imgDict = await this.getImageDict()
+			this.scenicSpot = await this.getImageDetail()
+			console.log("folderImgList", this.folderImgList)
+			console.log("imgDict", this.imgDict)
+			console.log("scenicSpot", this.scenicSpot)
+			this.currentImageItem = Object.keys(this.imgDict)[0]
 			await this.setDictList()
 			await this.setPageIndex(1)
 			this.init()
 		},
 		methods: {
+			// 获取远程图片路径列表
+			getImageList() {
+				return new Promise((res, rej) => {
+					uni.request({
+						url: 'https://zsdl-zzj.com:83/images/data/images.json',
+						success: (result) => {
+							console.log('getImages', result)
+							res(result.data)
+						}
+					})
+				})
+			},
+			// 获取远程图片字典
+			getImageDict() {
+				return new Promise((res, rej) => {
+					uni.request({
+						url: 'https://zsdl-zzj.com:83/images/data/imagesDict.json',
+						success: (result) => {
+							console.log('getImagesDict', result)
+							res(result.data)
+						}
+					})
+				})
+			},
+			// 获取远程图片详情
+			getImageDetail() {
+				return new Promise((res, rej) => {
+					uni.request({
+						url: 'https://zsdl-zzj.com:83/images/data/imagesDetail.json',
+						success: (result) => {
+							console.log('getImagesDetail', result)
+							res(result.data)
+						}
+					})
+				})
+			},
 			setDictList() {
-				Object.keys(imgDict).map(key => {
+				Object.keys(this.imgDict).map(key => {
 					this.imgDictList.push({
-						title: imgDict[key],
+						title: this.imgDict[key],
 						value: key,
 						message: this.scenicSpot[key].message,
 						msgShow: false
@@ -84,7 +125,7 @@
 				let begin = index * this.pageSize
 				let end = index * this.pageSize + this.pageSize
 				console.log(begin, end)
-				this.loadData = imgList[this.currentImageItem].slice(begin, end)
+				this.loadData = this.folderImgList[this.currentImageItem].slice(begin, end)
 				console.log(this.loadData)
 			},
 			async init() {
@@ -101,7 +142,7 @@
 						src: this.httpPath + item,
 						width: w,
 						height: h,
-						imgName: imgDict[this.currentImageItem]
+						imgName: this.imgDict[this.currentImageItem]
 					})
 					console.log('index, this.loadData', index, this.loadData.length - 1)
 					if (index === this.loadData.length - 1) {

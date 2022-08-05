@@ -69,6 +69,8 @@
     "@dcloudio/uni-ui": "^1.4.20",
     "@vue/shared": "^3.0.0",
     "core-js": "^3.6.5",
+    "crypto-js": "^4.1.1",
+    "dayjs": "^1.11.4",
     "flyio": "^0.6.2",
     "regenerator-runtime": "^0.12.1",
     "vue": "^2.6.11",

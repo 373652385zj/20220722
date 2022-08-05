@@ -21,12 +21,13 @@
 				</view>
 				<view class="info-block info-textarea" v-else>
 					<view class="label">{{item.label}}: </view>
-					<textarea v-model="form[item.value]" class="weui-input" :placeholder="item.placeholder" maxlength="6"/>
+					<textarea v-model="form[item.value]" class="weui-input" :placeholder="item.placeholder" :disabled="item.disable"/>
 					<text class="message">{{item.tip}}</text>		
 				</view>
 			</view>
 		</view>
 		<view class="save-bth">
+			<navigator open-type="exit" target="miniProgram">完成</navigator>
 			<button type="primary" @click="submit" :disabled="disabled">提交</button>
 		</view>
 	</view>
@@ -40,13 +41,15 @@
 					name: '',
 					phone: '',
 					address: '',
-					detailAddress: ''
+					detailAddress: '',
+          productContent: ''
 				},
 				formList: [
 					{value: 'name', label: '姓名', placeholder: '请输入姓名', type: 'input', tip: ''},
 					{value: 'phone', label: '手机号', placeholder: '请输入手机号', type: 'input', tip: ''},
 					{value: 'address', label: '地址', placeholder: '请选择地址', type: 'select', tip: ''},
 					{value: 'detailAddress', label: '详细地址', placeholder: '请输入详细地址', type: 'textarea', tip: ''},
+					{value: 'productContent', label: '发货内容', placeholder: '请输入发货内容', type: 'textarea', tip: '', disable: true},
 				],
 				disabled: false,
 				areaIndex: '',
@@ -83,9 +86,24 @@
 			}
 		},
 		onLoad() {
+			this.getProductContent()
 			console.log(this.$dayjs().format('YYYY-MM-DD hh:mm'))
 		},
 		methods: {
+			getProductContent() {
+				uni.request({
+					url: 'https://zsdl-zzj.com:8122/getProductContent',
+					method: 'POST',
+					data: {
+						phone: '15105958777',
+						tableNo: '001',
+					},
+					success: res => {
+						console.log('test', res)
+						this.form.productContent = res.data.data[0].productContent
+					}
+				})
+			},
 			areaPickerChange(val) {
 				console.log(val)
 			},
@@ -101,6 +119,7 @@
 				console.log('onchange:', e);
 			},
 			submit() {
+				this.$refs.popup.open('bottom')
 				// name: '',
 				// phone: '',
 				// address: '',
@@ -110,23 +129,24 @@
 				if (!this.form.address) {this.toast('请输入省市区'); return}
 				if (!this.form.detailAddress) {this.toast('请输入详细地址'); return}
 				console.log(this.form)
-				uni.request({
-					url: 'https://zsdl-zzj.com:8122/addAddress',
-					method: 'POST',
-					data: {
-						phone: '15105958777',
-						tableNo: '001',
-						dateTime: this.$dayjs().format('YYYY-MM-DD hh:mm') + ':00',
-						addressName: this.form.name,
-						addressPhone: this.form.phone,
-						address: this.form.address,
-						detailAddress: this.form.detailAddress
-					},
-					success: res => {
-						console.log('test', res)
-						this.toast(res.data.message)
-					}
-				})
+				// uni.request({
+				// 	url: 'https://zsdl-zzj.com:8122/addAddress',
+				// 	method: 'POST',
+				// 	data: {
+				// 		phone: '15105958777',
+				// 		tableNo: '001',
+				// 		dateTime: this.$dayjs().format('YYYY-MM-DD hh:mm') + ':00',
+				// 		addressName: this.form.name,
+				// 		addressPhone: this.form.phone,
+				// 		address: this.form.address,
+				// 		detailAddress: this.form.detailAddress,
+				// 		productContent: this.form.productContent
+				// 	},
+				// 	success: res => {
+				// 		console.log('test', res)
+				// 		this.toast(res.data.message)
+				// 	}
+				// })
 			},
 			toast(content) {
 				// #ifdef MP

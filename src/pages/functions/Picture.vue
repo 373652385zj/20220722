@@ -30,7 +30,6 @@
 
 <script>
 	// import imgList from "https://zsdl-zzj.com:83/images/data/images.json";
-	// import imgDict from "https://zsdl-zzj.com:83/images/data/imagesDict.json";
 	// import imgDetail from "https://zsdl-zzj.com:83/images/data/imagesDetail.json";
 	import ZWaterfallFlow from "../../components/z-waterfall-flow/index";
 	export default {
@@ -43,7 +42,6 @@
 				httpPath: "https://zsdl-zzj.com:83/images/",
 				folderImgList: [],
 				currentImageItem: "",
-				imgDict: {},
 				imgDictList: [],
 				imageInfo: [],
 				scenicSpot: {},
@@ -62,12 +60,10 @@
 		},
 		async onLoad() {
 			this.folderImgList = await this.getImageList()
-			this.imgDict = await this.getImageDict()
 			this.scenicSpot = await this.getImageDetail()
 			console.log("folderImgList", this.folderImgList)
-			console.log("imgDict", this.imgDict)
 			console.log("scenicSpot", this.scenicSpot)
-			this.currentImageItem = Object.keys(this.imgDict)[0]
+			this.currentImageItem = Object.keys(this.scenicSpot)[0]
 			await this.setDictList()
 			await this.setPageIndex(1)
 			this.init()
@@ -77,22 +73,12 @@
 			getImageList() {
 				return new Promise((res, rej) => {
 					uni.request({
-						url: 'https://zsdl-zzj.com:83/images/data/images.json',
+						url: 'https://zsdl-zzj.com:8122/getImagesInfo',
+						method: 'POST',
+						data: {},
 						success: (result) => {
 							console.log('getImages', result)
-							res(result.data)
-						}
-					})
-				})
-			},
-			// 获取远程图片字典
-			getImageDict() {
-				return new Promise((res, rej) => {
-					uni.request({
-						url: 'https://zsdl-zzj.com:83/images/data/imagesDict.json',
-						success: (result) => {
-							console.log('getImagesDict', result)
-							res(result.data)
+							res(result.data.data)
 						}
 					})
 				})
@@ -101,18 +87,29 @@
 			getImageDetail() {
 				return new Promise((res, rej) => {
 					uni.request({
-						url: 'https://zsdl-zzj.com:83/images/data/imagesDetail.json',
+						url: 'https://zsdl-zzj.com:8122/getImagesDetail',
+						method: 'POST',
+						data: {},
 						success: (result) => {
 							console.log('getImagesDetail', result)
-							res(result.data)
+							let resData = {}
+							result.data.data.map((item, index) => {
+								resData[item.value] = {
+									name: item.name,
+									message: item.message
+								}
+								if (index === result.data.data.length - 1) {
+									res(resData)
+								}
+							})
 						}
 					})
 				})
 			},
 			setDictList() {
-				Object.keys(this.imgDict).map(key => {
+				Object.keys(this.scenicSpot).map(key => {
 					this.imgDictList.push({
-						title: this.imgDict[key],
+						title: this.scenicSpot[key].name,
 						value: key,
 						message: this.scenicSpot[key].message,
 						msgShow: false
@@ -142,7 +139,7 @@
 						src: this.httpPath + item,
 						width: w,
 						height: h,
-						imgName: this.imgDict[this.currentImageItem]
+						imgName: this.scenicSpot[this.currentImageItem].name
 					})
 					console.log('index, this.loadData', index, this.loadData.length - 1)
 					if (index === this.loadData.length - 1) {

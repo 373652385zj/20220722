@@ -52,7 +52,7 @@
 		{
 			"path": "pages/functions/CollectingAddress",
 			"style": {
-				"navigationBarTitleText": "地址收集工具"
+				"navigationBarTitleText": "柚子发货"
 			}
 		}
 	],
